@@ -57,6 +57,7 @@ public class DES_Skeleton {
 	 * @param line
 	 */
 	private static String DES_decrypt(String iVStr, String line) {
+	
 		
 		return null;
 	}
@@ -70,7 +71,7 @@ public class DES_Skeleton {
 			
 			String encryptedText;
 			for (String line : Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset())) {
-				encryptedText = DES_encrypt(line);
+				encryptedText = DES_encrypt(keyStr.toString(),line);
 				writer.print(encryptedText);
 			}
 		} catch (IOException e) {
@@ -83,12 +84,45 @@ public class DES_Skeleton {
 	 * TODO: You need to write the DES encryption here.
 	 * @param line
 	 */
-	private static String DES_encrypt(String line) {
+	private static String DES_encrypt(String key, String line) {
+		processKey(key);
+		byte[] l = line.getBytes();
 		
 		return null;
 	}
-
-
+	
+	private static void processKey(String key){
+		SBoxes sbox = new SBoxes();
+		BigInteger k = permutateKey(new BigInteger(key, 16), sbox.PC1);
+		String k_str = k.toString(2);
+		String c_0 = k_str.substring(0, k_str.length()/2);
+		String d_0 = k_str.substring(k_str.length()/2, k_str.length());
+		
+	}
+	//Taken From StackOverflow 
+	//http://stackoverflow.com/questions/4299111/convert-long-to-byte-array-and-add-it-to-another-array
+	private static byte[] longToByteArray(long hex) {
+		return new byte[] {
+				(byte) (hex >> 56),
+				(byte) (hex >> 48),
+				(byte) (hex >> 40),
+				(byte) (hex >> 32),
+				(byte) (hex >> 24),
+				(byte) (hex >> 16),
+				(byte) (hex >> 8),
+				(byte) hex
+		};
+	}
+	private static BigInteger permutateKey(BigInteger k, int[] pc){
+		String bin_k = k.toString(2);
+		String new_key = "";
+		
+		for(int i=0; i< pc.length; i++) {
+			new_key += bin_k.charAt(pc[i]-1);
+		}
+		return new BigInteger(new_key, 2);
+	}
+	
 	static void genDESkey(){
 		System.out.println("3F52D4829C358A95");
 		
