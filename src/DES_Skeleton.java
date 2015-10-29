@@ -87,6 +87,14 @@ public class DES_Skeleton {
 		BigInteger[] sub_keys = processKey(key);
 		BigInteger l = new BigInteger(line.getBytes());
 		BigInteger[] blocks = splitBlock(l);
+		String results = "";
+		for(BigInteger blck: blocks){
+			BigInteger ip_blck = permutateKey(blck, sbox.IP, 64);
+			String ip_str = addPadding(ip_blck.toString(2), 64);
+			String ip_l = ip_str.substring(0, ip_str.length()/2);
+			String ip_r = ip_str.substring(ip_str.length()/2, ip_str.length());
+			
+		}
 		return null;
 	}
 	
