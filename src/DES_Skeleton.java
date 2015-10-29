@@ -101,15 +101,14 @@ public class DES_Skeleton {
 		d_arr[0] = new BigInteger(d_0, 2);
 		for(int i=1; i<17; i++) {
 			c_arr[i] = rotateKey(c_arr[i-1], sbox.rotations[i-1]);
-			d_arr[i] = rotateKey(d_arr[i-1], i-1);
-		}
-		for(int i=1; i< 17; i++){
-			c_arr[i] = permutateKey(c_arr[i], sbox.PC2, 28);
-			d_arr[i] = permutateKey(d_arr[i], sbox.PC2, 28);
+			d_arr[i] = rotateKey(d_arr[i-1], sbox.rotations[i-1]);
 		}
 		BigInteger[] sub_keys = new BigInteger[16];
 		for(int i =1; i<17; i++){
 			sub_keys[i-1] = mergeKeys(c_arr[i], d_arr[i], 28);
+		}
+		for(int i=0; i< 16; i++){
+			sub_keys[i] = permutateKey(sub_keys[i], sbox.PC2, 56);
 		}
 		return sub_keys;
 	}
@@ -139,11 +138,11 @@ public class DES_Skeleton {
 		if(str.length()>length){
 			throw new IllegalArgumentException();
 		}
-		while(str.length()<57){
+		while(str.length()<56){
 			str+='0';
 		}
 		BigInteger l = new BigInteger(Integer.toString(length));
-		str+=addPadding(l.toString(2), l.bitLength());
+		str+=addPadding(l.toString(2), 8);
 		
 		return new BigInteger(str);
 	}
@@ -173,13 +172,13 @@ public class DES_Skeleton {
 			block_list.add(splitPadding("",0));
 		}else{
 			int k = 0;
-			while(x.length() - k > 64){
+			while(x.length() - k >= 64){
 				block_list.add(new BigInteger(x.substring(k, k+64), 2));
 				k = k+64;
 			}
 			block_list.add(splitPadding(x.substring(k,  x.length()), x.length()-k));
 		}
-		return (BigInteger[]) block_list.toArray();
+		return block_list.toArray(new BigInteger[block_list.size()]);
 	}
 	
 	static void genDESkey(){
