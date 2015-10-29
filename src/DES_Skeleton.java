@@ -1,18 +1,17 @@
+import gnu.getopt.Getopt;
+
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.BitSet;
-import java.math.BigInteger;
-import java.security.SecureRandom;
-import java.util.Base64.Encoder;
-
-import gnu.getopt.Getopt;
 
 
 public class DES_Skeleton {
+	private static SBoxes sbox = new SBoxes();
 
 	public static void main(String[] args) {
 		
@@ -85,42 +84,102 @@ public class DES_Skeleton {
 	 * @param line
 	 */
 	private static String DES_encrypt(String key, String line) {
-		processKey(key);
-		byte[] l = line.getBytes();
-		
+		BigInteger[] sub_keys = processKey(key);
+		BigInteger l = new BigInteger(line.getBytes());
+		BigInteger[] blocks = splitBlock(l);
 		return null;
 	}
 	
-	private static void processKey(String key){
-		SBoxes sbox = new SBoxes();
-		BigInteger k = permutateKey(new BigInteger(key, 16), sbox.PC1);
-		String k_str = k.toString(2);
+	private static BigInteger[] processKey(String key){
+		BigInteger k = permutateKey(new BigInteger(key, 16), sbox.PC1, 64);
+		String k_str = addPadding(k.toString(2), 56);
 		String c_0 = k_str.substring(0, k_str.length()/2);
 		String d_0 = k_str.substring(k_str.length()/2, k_str.length());
-		
+		BigInteger[] c_arr = new BigInteger[17];
+		BigInteger[] d_arr = new BigInteger[17];
+		c_arr[0] = new BigInteger(c_0, 2);
+		d_arr[0] = new BigInteger(d_0, 2);
+		for(int i=1; i<17; i++) {
+			c_arr[i] = rotateKey(c_arr[i-1], sbox.rotations[i-1]);
+			d_arr[i] = rotateKey(d_arr[i-1], i-1);
+		}
+		for(int i=1; i< 17; i++){
+			c_arr[i] = permutateKey(c_arr[i], sbox.PC2, 28);
+			d_arr[i] = permutateKey(d_arr[i], sbox.PC2, 28);
+		}
+		BigInteger[] sub_keys = new BigInteger[16];
+		for(int i =1; i<17; i++){
+			sub_keys[i-1] = mergeKeys(c_arr[i], d_arr[i], 28);
+		}
+		return sub_keys;
 	}
-	//Taken From StackOverflow 
-	//http://stackoverflow.com/questions/4299111/convert-long-to-byte-array-and-add-it-to-another-array
-	private static byte[] longToByteArray(long hex) {
-		return new byte[] {
-				(byte) (hex >> 56),
-				(byte) (hex >> 48),
-				(byte) (hex >> 40),
-				(byte) (hex >> 32),
-				(byte) (hex >> 24),
-				(byte) (hex >> 16),
-				(byte) (hex >> 8),
-				(byte) hex
-		};
-	}
-	private static BigInteger permutateKey(BigInteger k, int[] pc){
-		String bin_k = k.toString(2);
+
+	private static BigInteger permutateKey(BigInteger k, int[] pc, int length){
+		String bin_k = addPadding(k.toString(2), length);
 		String new_key = "";
 		
 		for(int i=0; i< pc.length; i++) {
 			new_key += bin_k.charAt(pc[i]-1);
 		}
 		return new BigInteger(new_key, 2);
+	}
+	
+	private static String addPadding(String str, int length) {
+		if(str.length() > length){
+			throw new IllegalArgumentException();
+		}
+		if(str.length() == length)
+			return str;
+		while(str.length() !=  length)
+			str = '0' + str;
+		return str;
+	}
+	
+	private static BigInteger splitPadding(String str, int length){
+		if(str.length()>length){
+			throw new IllegalArgumentException();
+		}
+		while(str.length()<57){
+			str+='0';
+		}
+		BigInteger l = new BigInteger(Integer.toString(length));
+		str+=addPadding(l.toString(2), l.bitLength());
+		
+		return new BigInteger(str);
+	}
+	
+	private static BigInteger rotateKey(BigInteger k, int r) {
+		String key = addPadding(k.toString(2), 28);
+		while(r > 0){
+			key = key.substring(1, key.length()) + key.charAt(0);
+			r--;
+		}
+		return new BigInteger(key,2);
+	}
+	
+	private static BigInteger mergeKeys(BigInteger c, BigInteger d, int length){
+		String c_str = addPadding(c.toString(2), length);
+		String d_str = addPadding(d.toString(2), length);
+		return new BigInteger(c_str+d_str, 2);
+	}
+	
+	private static BigInteger[] splitBlock(BigInteger line) {
+		ArrayList<BigInteger> block_list = new ArrayList<BigInteger>();
+		String x = addPadding(line.toString(2), line.bitLength()+1);
+		if(x.length() < 64){
+			block_list.add(splitPadding(x, x.length()));
+		}else if(x.length() == 64){
+			//add block of 0's
+			block_list.add(splitPadding("",0));
+		}else{
+			int k = 0;
+			while(x.length() - k > 64){
+				block_list.add(new BigInteger(x.substring(k, k+64), 2));
+				k = k+64;
+			}
+			block_list.add(splitPadding(x.substring(k,  x.length()), x.length()-k));
+		}
+		return (BigInteger[]) block_list.toArray();
 	}
 	
 	static void genDESkey(){
