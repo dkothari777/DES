@@ -45,6 +45,7 @@ public class DES_Skeleton {
 			String IVStr = lines.get(0);
 			lines.remove(0);
 			String encryptedText;
+			iv = new BigInteger(IVStr,16);
 			int count = 0;
 			for (String line : lines) {
 				if(count != 0)
@@ -67,8 +68,7 @@ public class DES_Skeleton {
 	private static String DES_decrypt(String iVStr, String line, String key) {
 		BigInteger[] sub_keys = processKey(key);
 		BigInteger l = new BigInteger(line,16);
-		String results = "";
-		iv = new BigInteger(iVStr,16);			
+		String results = "";			
 			
 		BigInteger ip_blck = permutate(l, sbox.IP, 64);
 		String ip_str = addPadding(ip_blck.toString(2), 64);
@@ -85,7 +85,7 @@ public class DES_Skeleton {
 		}
 		BigInteger decrypted = new BigInteger(addPadding(r_arr[16].toString(2),32)+addPadding(l_arr[16].toString(2),32),2);
 		decrypted = permutate(decrypted, sbox.FP, 64);
-		//decrypted = decrypted.xor(iv);
+		decrypted = decrypted.xor(iv);
 		iv = l;
 		results += removeTrailingZeros(decrypted.toString(16));
 		if(decrypted.toString(16).equals("0")){
@@ -143,7 +143,7 @@ public class DES_Skeleton {
 		
 		for(BigInteger blck: blocks){
 			
-			//blck = blck.xor(iv);
+			blck = blck.xor(iv);
 			
 			BigInteger ip_blck = permutate(blck, sbox.IP, 64);
 			String ip_str = addPadding(ip_blck.toString(2), 64);
