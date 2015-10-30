@@ -8,11 +8,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.Base64.Encoder;
 
 
 public class DES_Skeleton {
 	private static SBoxes sbox = new SBoxes();
+	private static BigInteger iv;
 	
 	public static void main(String[] args) {
 		
@@ -24,6 +27,7 @@ public class DES_Skeleton {
 		pcl(args, inputFile, outputFile, keyStr, encrypt);
 		
 		if(keyStr.toString() != "" && encrypt.toString().equals("e")){
+			iv = generateIV();
 			encrypt(keyStr, inputFile, outputFile);
 		} else if(keyStr.toString() != "" && encrypt.toString().equals("d")){
 			decrypt(keyStr, inputFile, outputFile);
@@ -41,12 +45,15 @@ public class DES_Skeleton {
 			String IVStr = lines.get(0);
 			lines.remove(0);
 			String encryptedText;
-			
+			int count = 0;
 			for (String line : lines) {
+				if(count != 0)
+					IVStr = line;
 				encryptedText = DES_decrypt(IVStr, line, keyStr.toString());
 				writer.print(encryptedText);
-				writer.close();
+				count ++;
 			}
+			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -59,11 +66,11 @@ public class DES_Skeleton {
 	 */
 	private static String DES_decrypt(String iVStr, String line, String key) {
 		BigInteger[] sub_keys = processKey(key);
-		BigInteger l = new BigInteger(line.getBytes());
-		BigInteger[] blocks = splitBlock(l);
+		BigInteger l = new BigInteger(line,16);
+		BigInteger[] blocks = splitBlock(l,64);
 		String results = "";
-		BigInteger iv = new BigInteger(iVStr,16);
-		results += addPadding(iv.toString(2), 64) + '\n';
+		iv = new BigInteger(iVStr,16);
+		//results += addPadding(iv.toString(2), 64) + '\n';
 		
 		for(BigInteger blck: blocks){
 			
@@ -83,7 +90,7 @@ public class DES_Skeleton {
 			}
 			BigInteger decrypted = new BigInteger(addPadding(r_arr[16].toString(2),32)+addPadding(l_arr[16].toString(2),32),2);
 			decrypted = permutate(decrypted, sbox.FP, 64);
-			decrypted = decrypted.xor(iv);
+			//decrypted = decrypted.xor(iv);
 			iv = blck;
 			results += decrypted.toString(16) + '\n';
 		}
@@ -98,11 +105,12 @@ public class DES_Skeleton {
 			PrintWriter writer = new PrintWriter(outputFile.toString(), "UTF-8");
 			
 			String encryptedText;
+			writer.println(iv.toString(16));
 			for (String line : Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset())) {
 				encryptedText = DES_encrypt(keyStr.toString(),line);
 				writer.print(encryptedText);
-				writer.close();
 			}
+			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -115,15 +123,15 @@ public class DES_Skeleton {
 	 */
 	private static String DES_encrypt(String key, String line) {
 		BigInteger[] sub_keys = processKey(key);
-		BigInteger l = new BigInteger(line.getBytes());
-		BigInteger[] blocks = splitBlock(l);
+		//line = asciiToHex(line);
+		byte[] k = line.getBytes();
+		BigInteger l = new BigInteger(line, 16);
+		BigInteger[] blocks = splitBlock(l, k.length*4);
 		String results = "";
-		BigInteger iv = generateIV();
-		results += iv.toString(16) + '\n';
 		
 		for(BigInteger blck: blocks){
 			
-			blck = blck.xor(iv);
+			//blck = blck.xor(iv);
 			
 			BigInteger ip_blck = permutate(blck, sbox.IP, 64);
 			String ip_str = addPadding(ip_blck.toString(2), 64);
@@ -150,7 +158,7 @@ public class DES_Skeleton {
 		byte[] b = new byte[8];
 		SecureRandom r = new SecureRandom();
 		r.nextBytes(b);
-		return new BigInteger(b);
+		return new BigInteger(b).abs();
 	}
 
 
@@ -235,9 +243,6 @@ public class DES_Skeleton {
 		while(str.length()<64){
 			str+='0';
 		}
-		//BigInteger l = new BigInteger(Integer.toString(length),10);
-		//str+=addPadding(l.toString(2), 8);
-		
 		return new BigInteger(str,2);
 	}
 	
@@ -256,21 +261,20 @@ public class DES_Skeleton {
 		return new BigInteger(c_str+d_str, 2);
 	}
 	
-	private static BigInteger[] splitBlock(BigInteger line) {
+	private static BigInteger[] splitBlock(BigInteger line, int length) {
 		ArrayList<BigInteger> block_list = new ArrayList<BigInteger>();
-		String x = addPadding(line.toString(2), line.bitLength()+1);
+		String x = addPadding(line.toString(2), length);
 		if(x.length() < 64){
 			block_list.add(splitPadding(x, x.length()));
-		}else if(x.length() == 64){
-			//add block of 0's
-			block_list.add(splitPadding("",0));
 		}else{
 			int k = 0;
 			while(x.length() - k >= 64){
 				block_list.add(new BigInteger(x.substring(k, k+64),2));
 				k = k+64;
 			}
-			block_list.add(splitPadding(x.substring(k,  x.length()), x.length()-k));
+			if(x.length() -k > 0){
+				block_list.add(splitPadding(x.substring(k,  x.length()), x.length()-k));
+			}
 		}
 		return block_list.toArray(new BigInteger[block_list.size()]);
 	}
@@ -282,7 +286,28 @@ public class DES_Skeleton {
 		System.out.println((new BigInteger(b)).toString(16));
 		return;
 	}
-
+	
+	private static String asciiToHex(String asciiValue)
+	{
+	    char[] chars = asciiValue.toCharArray();
+	    StringBuffer hex = new StringBuffer();
+	    for (int i = 0; i < chars.length; i++)
+	    {
+	        hex.append(Integer.toHexString((int) chars[i]));
+	    }
+	    return hex.toString();
+	}
+	
+	private static String hexToASCII(String hexValue)
+	{
+	    StringBuilder output = new StringBuilder("");
+	    for (int i = 0; i < hexValue.length(); i += 2)
+	    {
+	        String str = hexValue.substring(i, i + 2);
+	        output.append((char) Integer.parseInt(str, 16));
+	    }
+	    return output.toString();
+	}
 
 	/**
 	 * This function Processes the Command Line Arguments.
