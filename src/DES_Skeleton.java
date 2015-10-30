@@ -137,6 +137,9 @@ public class DES_Skeleton {
 		BigInteger[] sub_keys = processKey(key);
 		//line = asciiToHex(line);
 		byte[] k = line.getBytes();
+		if(line.isEmpty()){
+			return "";
+		}
 		BigInteger l = new BigInteger(line, 16);
 		BigInteger[] blocks = splitBlock(l, k.length*4);
 		String results = "";
