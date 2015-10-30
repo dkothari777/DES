@@ -87,7 +87,7 @@ public class DES_Skeleton {
 		decrypted = permutate(decrypted, sbox.FP, 64);
 		decrypted = decrypted.xor(iv);
 		iv = l;
-		results += removeTrailingZeros(decrypted.toString(16));
+		results += removeTrailingZeros(addPadding(decrypted.toString(16),16));
 		if(decrypted.toString(16).equals("0")){
 			results += '\n';
 		}
