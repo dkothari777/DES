@@ -86,6 +86,7 @@ public class DES_Skeleton {
 	private static String DES_encrypt(String key, String line) {
 		BigInteger[] sub_keys = processKey(key);
 		BigInteger l = new BigInteger(line.getBytes());
+		System.out.println(l.toString(2));
 		BigInteger[] blocks = splitBlock(l);
 		String results = "";
 		for(BigInteger blck: blocks){
@@ -103,7 +104,7 @@ public class DES_Skeleton {
 				r_arr[i] = l_arr[i-1].xor(functionE(r_arr[i-1], sub_keys[i-1]));
 			}
 
-			BigInteger encrypted = new BigInteger(addPadding(r_arr[16].toString(2),32)+addPadding(l_arr[16].toString(2),32));
+			BigInteger encrypted = new BigInteger(addPadding(r_arr[16].toString(2),32)+addPadding(l_arr[16].toString(2),32),2);
 			encrypted = permutate(encrypted, sbox.FP, 64);
 			results += encrypted.toString(16) + '\n';
 		}
@@ -120,7 +121,7 @@ public class DES_Skeleton {
 			new_er += substitute(s_er.substring(i, i+6), i/6);
 		}
 		
-		return permutate(new BigInteger(new_er), sbox.P ,32);
+		return permutate(new BigInteger(new_er,2), sbox.P ,32);
 	}
 	
 	private static String substitute(String s, int n){
@@ -193,10 +194,10 @@ public class DES_Skeleton {
 		while(str.length()<56){
 			str+='0';
 		}
-		BigInteger l = new BigInteger(Integer.toString(length));
+		BigInteger l = new BigInteger(Integer.toString(length),10);
 		str+=addPadding(l.toString(2), 8);
 		
-		return new BigInteger(str);
+		return new BigInteger(str,2);
 	}
 	
 	private static BigInteger rotateKey(BigInteger k, int r) {
@@ -225,7 +226,7 @@ public class DES_Skeleton {
 		}else{
 			int k = 0;
 			while(x.length() - k >= 64){
-				block_list.add(new BigInteger(x.substring(k, k+64), 2));
+				block_list.add(new BigInteger(x.substring(k, k+64),2));
 				k = k+64;
 			}
 			block_list.add(splitPadding(x.substring(k,  x.length()), x.length()-k));
