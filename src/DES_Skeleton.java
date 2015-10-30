@@ -191,11 +191,11 @@ public class DES_Skeleton {
 		if(str.length()>length){
 			throw new IllegalArgumentException();
 		}
-		while(str.length()<56){
+		while(str.length()<64){
 			str+='0';
 		}
-		BigInteger l = new BigInteger(Integer.toString(length),10);
-		str+=addPadding(l.toString(2), 8);
+		//BigInteger l = new BigInteger(Integer.toString(length),10);
+		//str+=addPadding(l.toString(2), 8);
 		
 		return new BigInteger(str,2);
 	}
