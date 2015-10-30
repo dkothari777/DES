@@ -49,7 +49,7 @@ public class DES_Skeleton {
 			int count = 0;
 			for (String line : lines) {
 				if(count != 0)
-					IVStr = line;
+					IVStr = lines.get(count-1);
 				encryptedText = DES_decrypt(IVStr, line, keyStr.toString());
 				writer.print(encryptedText);
 				count ++;
@@ -87,7 +87,7 @@ public class DES_Skeleton {
 		decrypted = permutate(decrypted, sbox.FP, 64);
 		decrypted = decrypted.xor(iv);
 		iv = l;
-		results += removeTrailingZeros(addPadding(decrypted.toString(16),16));
+		results += hexToASCII(removeTrailingZeros(addPadding(decrypted.toString(16),16)));
 		if(decrypted.toString(16).equals("0")){
 			results += '\n';
 		}
@@ -107,7 +107,16 @@ public class DES_Skeleton {
 				break;
 			}
 		}
-		return (index == length-1) ? str :str.substring(0,index+1);
+		if(index == length-1)
+			return str;
+		else{
+			String temp = str.substring(0, index+1);
+			if(temp.length()%2!=0)
+				temp = str.substring(0, index+2);
+			return temp;
+		}
+		
+		//return (index == length-1) ? str :str.substring(0,index+1);
 	}
 
 	private static void encrypt(StringBuilder keyStr, StringBuilder inputFile,
@@ -135,7 +144,7 @@ public class DES_Skeleton {
 	 */
 	private static String DES_encrypt(String key, String line) {
 		BigInteger[] sub_keys = processKey(key);
-		//line = asciiToHex(line);
+		line = asciiToHex(line);
 		byte[] k = line.getBytes();
 		if(line.isEmpty()){
 			return "";
