@@ -67,36 +67,48 @@ public class DES_Skeleton {
 	private static String DES_decrypt(String iVStr, String line, String key) {
 		BigInteger[] sub_keys = processKey(key);
 		BigInteger l = new BigInteger(line,16);
-		BigInteger[] blocks = splitBlock(l,64);
 		String results = "";
-		iv = new BigInteger(iVStr,16);
-		//results += addPadding(iv.toString(2), 64) + '\n';
+		iv = new BigInteger(iVStr,16);			
+			
+		BigInteger ip_blck = permutate(l, sbox.IP, 64);
+		String ip_str = addPadding(ip_blck.toString(2), 64);
+		String ip_l = ip_str.substring(0, ip_str.length()/2);
+		String ip_r = ip_str.substring(ip_str.length()/2, ip_str.length());
 		
-		for(BigInteger blck: blocks){
-			
-			
-			BigInteger ip_blck = permutate(blck, sbox.IP, 64);
-			String ip_str = addPadding(ip_blck.toString(2), 64);
-			String ip_l = ip_str.substring(0, ip_str.length()/2);
-			String ip_r = ip_str.substring(ip_str.length()/2, ip_str.length());
-			
-			BigInteger[] l_arr = new BigInteger[17];
-			BigInteger[] r_arr = new BigInteger[17];
-			l_arr[0] = new BigInteger(ip_l, 2);
-			r_arr[0] = new BigInteger(ip_r, 2);
-			for(int i=1, j=15; i<17; i++, j--) {
-				l_arr[i] = r_arr[i-1];
-				r_arr[i] = l_arr[i-1].xor(functionE(r_arr[i-1], sub_keys[j]));
-			}
-			BigInteger decrypted = new BigInteger(addPadding(r_arr[16].toString(2),32)+addPadding(l_arr[16].toString(2),32),2);
-			decrypted = permutate(decrypted, sbox.FP, 64);
-			//decrypted = decrypted.xor(iv);
-			iv = blck;
-			results += decrypted.toString(16) + '\n';
+		BigInteger[] l_arr = new BigInteger[17];
+		BigInteger[] r_arr = new BigInteger[17];
+		l_arr[0] = new BigInteger(ip_l, 2);
+		r_arr[0] = new BigInteger(ip_r, 2);
+		for(int i=1, j=15; i<17; i++, j--) {
+			l_arr[i] = r_arr[i-1];
+			r_arr[i] = l_arr[i-1].xor(functionE(r_arr[i-1], sub_keys[j]));
 		}
+		BigInteger decrypted = new BigInteger(addPadding(r_arr[16].toString(2),32)+addPadding(l_arr[16].toString(2),32),2);
+		decrypted = permutate(decrypted, sbox.FP, 64);
+		//decrypted = decrypted.xor(iv);
+		iv = l;
+		results += removeTrailingZeros(decrypted.toString(16));
+		if(decrypted.toString(16).equals("0")){
+			results += '\n';
+		}
+	
 		return results;
 	}
 
+	//code taken from http://wiki.scn.sap.com/wiki/display/Java/Remove+Leading+and+Trailing+Zeros+from+a+String
+	private static String removeTrailingZeros( java.lang.String str ){
+		if (str == null){
+			return null;
+		}
+		char[] chars = str.toCharArray();int length,index ;length = str.length();
+		index = length -1;
+		for (; index >=0;index--){
+			if (chars[index] != '0'){
+				break;
+			}
+		}
+		return (index == length-1) ? str :str.substring(0,index+1);
+	}
 
 	private static void encrypt(StringBuilder keyStr, StringBuilder inputFile,
 			StringBuilder outputFile) {
@@ -266,16 +278,20 @@ public class DES_Skeleton {
 		String x = addPadding(line.toString(2), length);
 		if(x.length() < 64){
 			block_list.add(splitPadding(x, x.length()));
-		}else{
+		}
+		else{
 			int k = 0;
 			while(x.length() - k >= 64){
 				block_list.add(new BigInteger(x.substring(k, k+64),2));
 				k = k+64;
 			}
-			if(x.length() -k > 0){
+			if(x.length()-k > 0){
 				block_list.add(splitPadding(x.substring(k,  x.length()), x.length()-k));
-			}
+			}	
 		}
+		
+		block_list.add(splitPadding("",0));
+		
 		return block_list.toArray(new BigInteger[block_list.size()]);
 	}
 	
