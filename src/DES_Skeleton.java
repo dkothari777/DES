@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class DES_Skeleton {
 			String encryptedText;
 			
 			for (String line : lines) {
-				encryptedText = DES_decrypt(IVStr, line);
+				encryptedText = DES_decrypt(IVStr, line, keyStr.toString());
 				writer.print(encryptedText);
 				writer.close();
 			}
@@ -56,10 +57,37 @@ public class DES_Skeleton {
 	 * TODO: You need to write the DES encryption here.
 	 * @param line
 	 */
-	private static String DES_decrypt(String iVStr, String line) {
-	
+	private static String DES_decrypt(String iVStr, String line, String key) {
+		BigInteger[] sub_keys = processKey(key);
+		BigInteger l = new BigInteger(line.getBytes());
+		BigInteger[] blocks = splitBlock(l);
+		String results = "";
+		BigInteger iv = new BigInteger(iVStr,16);
+		results += addPadding(iv.toString(2), 64) + '\n';
 		
-		return null;
+		for(BigInteger blck: blocks){
+			
+			
+			BigInteger ip_blck = permutate(blck, sbox.IP, 64);
+			String ip_str = addPadding(ip_blck.toString(2), 64);
+			String ip_l = ip_str.substring(0, ip_str.length()/2);
+			String ip_r = ip_str.substring(ip_str.length()/2, ip_str.length());
+			
+			BigInteger[] l_arr = new BigInteger[17];
+			BigInteger[] r_arr = new BigInteger[17];
+			l_arr[0] = new BigInteger(ip_l, 2);
+			r_arr[0] = new BigInteger(ip_r, 2);
+			for(int i=1, j=15; i<17; i++, j--) {
+				l_arr[i] = r_arr[i-1];
+				r_arr[i] = l_arr[i-1].xor(functionE(r_arr[i-1], sub_keys[j]));
+			}
+			BigInteger decrypted = new BigInteger(addPadding(r_arr[16].toString(2),32)+addPadding(l_arr[16].toString(2),32),2);
+			decrypted = permutate(decrypted, sbox.FP, 64);
+			decrypted = decrypted.xor(iv);
+			iv = blck;
+			results += decrypted.toString(16) + '\n';
+		}
+		return results;
 	}
 
 
@@ -90,7 +118,13 @@ public class DES_Skeleton {
 		BigInteger l = new BigInteger(line.getBytes());
 		BigInteger[] blocks = splitBlock(l);
 		String results = "";
+		BigInteger iv = generateIV();
+		results += iv.toString(16) + '\n';
+		
 		for(BigInteger blck: blocks){
+			
+			blck = blck.xor(iv);
+			
 			BigInteger ip_blck = permutate(blck, sbox.IP, 64);
 			String ip_str = addPadding(ip_blck.toString(2), 64);
 			String ip_l = ip_str.substring(0, ip_str.length()/2);
@@ -106,11 +140,20 @@ public class DES_Skeleton {
 			}
 			BigInteger encrypted = new BigInteger(addPadding(r_arr[16].toString(2),32)+addPadding(l_arr[16].toString(2),32),2);
 			encrypted = permutate(encrypted, sbox.FP, 64);
+			iv = encrypted;
 			results += encrypted.toString(16) + '\n';
 		}
 		return results;
 	}
 	
+	private static BigInteger generateIV() {
+		byte[] b = new byte[8];
+		SecureRandom r = new SecureRandom();
+		r.nextBytes(b);
+		return new BigInteger(b);
+	}
+
+
 	private static BigInteger functionE(BigInteger r, BigInteger k){		
 		BigInteger x_er = k.xor(permutate(r, sbox.E, 32));
 		String s_er = addPadding(x_er.toString(2),48);
@@ -233,8 +276,10 @@ public class DES_Skeleton {
 	}
 	
 	static void genDESkey(){
-		System.out.println("3F52D4829C358A95");
-		
+		byte[] b = new byte[8];
+		SecureRandom r = new SecureRandom();
+		r.nextBytes(b);
+		System.out.println((new BigInteger(b)).toString(16));
 		return;
 	}
 
