@@ -8,9 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
-import java.util.Base64.Encoder;
+
 
 
 public class DES_Skeleton {
@@ -314,25 +313,35 @@ public class DES_Skeleton {
 		System.out.println((new BigInteger(b)).toString(16));
 		return;
 	}
-	
+	/*
+	 * This function was take from http://howtodoinjava.com/2014/06/05/convert-hex-to-ascii-and-ascii-to-hex/
+	 * Explanation:
+	 * When we first wrote the encryption, we wrote it when the messages were being passed as hex messages only
+	 * So we needed the messages to be in hex only. Since the input was going to be in ascii characters, we can
+	 * then map the ascii characters to hex. Since this was 
+	 * */
 	private static String asciiToHex(String asciiValue)
 	{
 	    char[] chars = asciiValue.toCharArray();
-	    StringBuffer hex = new StringBuffer();
+	    String hex = "";
 	    for (int i = 0; i < chars.length; i++)
 	    {
-	        hex.append(Integer.toHexString((int) chars[i]));
+	        hex+=Integer.toHexString((int) chars[i]);
 	    }
-	    return hex.toString();
+	    return hex;
 	}
-	
+	/*
+	 * This function was take from http://howtodoinjava.com/2014/06/05/convert-hex-to-ascii-and-ascii-to-hex/
+	 * Explanation: 
+	 * 	Same as above
+	 * */
 	private static String hexToASCII(String hexValue)
 	{
-	    StringBuilder output = new StringBuilder("");
+	    String output = "";
 	    for (int i = 0; i < hexValue.length(); i += 2)
 	    {
 	        String str = hexValue.substring(i, i + 2);
-	        output.append((char) Integer.parseInt(str, 16));
+	        output+= (char) Integer.parseInt(str, 16);
 	    }
 	    return output.toString();
 	}
