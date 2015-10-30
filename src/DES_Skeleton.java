@@ -44,6 +44,7 @@ public class DES_Skeleton {
 			for (String line : lines) {
 				encryptedText = DES_decrypt(IVStr, line);
 				writer.print(encryptedText);
+				writer.close();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -72,6 +73,7 @@ public class DES_Skeleton {
 			for (String line : Files.readAllLines(Paths.get(inputFile.toString()), Charset.defaultCharset())) {
 				encryptedText = DES_encrypt(keyStr.toString(),line);
 				writer.print(encryptedText);
+				writer.close();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -86,7 +88,6 @@ public class DES_Skeleton {
 	private static String DES_encrypt(String key, String line) {
 		BigInteger[] sub_keys = processKey(key);
 		BigInteger l = new BigInteger(line.getBytes());
-		System.out.println(l.toString(2));
 		BigInteger[] blocks = splitBlock(l);
 		String results = "";
 		for(BigInteger blck: blocks){
@@ -103,13 +104,10 @@ public class DES_Skeleton {
 				l_arr[i] = r_arr[i-1];
 				r_arr[i] = l_arr[i-1].xor(functionE(r_arr[i-1], sub_keys[i-1]));
 			}
-
 			BigInteger encrypted = new BigInteger(addPadding(r_arr[16].toString(2),32)+addPadding(l_arr[16].toString(2),32),2);
 			encrypted = permutate(encrypted, sbox.FP, 64);
 			results += encrypted.toString(16) + '\n';
 		}
-		
-		
 		return results;
 	}
 	
