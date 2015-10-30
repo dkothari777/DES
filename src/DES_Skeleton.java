@@ -12,7 +12,7 @@ import java.util.List;
 
 public class DES_Skeleton {
 	private static SBoxes sbox = new SBoxes();
-
+	
 	public static void main(String[] args) {
 		
 		StringBuilder inputFile = new StringBuilder();
@@ -89,17 +89,61 @@ public class DES_Skeleton {
 		BigInteger[] blocks = splitBlock(l);
 		String results = "";
 		for(BigInteger blck: blocks){
-			BigInteger ip_blck = permutateKey(blck, sbox.IP, 64);
+			BigInteger ip_blck = permutate(blck, sbox.IP, 64);
 			String ip_str = addPadding(ip_blck.toString(2), 64);
 			String ip_l = ip_str.substring(0, ip_str.length()/2);
 			String ip_r = ip_str.substring(ip_str.length()/2, ip_str.length());
 			
+			BigInteger[] l_arr = new BigInteger[17];
+			BigInteger[] r_arr = new BigInteger[17];
+			l_arr[0] = new BigInteger(ip_l, 2);
+			r_arr[0] = new BigInteger(ip_r, 2);
+			for(int i=1; i<17; i++) {
+				l_arr[i] = r_arr[i-1];
+				r_arr[i] = l_arr[i-1].xor(functionE(r_arr[i-1], sub_keys[i-1]));
+			}
+
+			BigInteger encrypted = new BigInteger(addPadding(r_arr[16].toString(2),32)+addPadding(l_arr[16].toString(2),32));
+			encrypted = permutate(encrypted, sbox.FP, 64);
+			results += encrypted.toString(16) + '\n';
 		}
-		return null;
+		
+		
+		return results;
 	}
 	
+	private static BigInteger functionE(BigInteger r, BigInteger k){		
+		BigInteger x_er = k.xor(permutate(r, sbox.E, 32));
+		String s_er = addPadding(x_er.toString(2),48);
+		String new_er="";
+		for(int i=0; i<48; i+=6){
+			new_er += substitute(s_er.substring(i, i+6), i/6);
+		}
+		
+		return permutate(new BigInteger(new_er), sbox.P ,32);
+	}
+	
+	private static String substitute(String s, int n){
+		byte[] sb = sbox.S[n];
+		String i="", j="";
+		i += s.charAt(0);		// 00 01 11
+		i += s.charAt(5);		// 0000 0001 0010
+		j = s.substring(1,5);
+		
+		int row = Integer.parseInt(i, 2);
+		int col = Integer.parseInt(j, 2);
+		
+		byte b[] = {sb[row*16 + col]};
+		BigInteger newS = new BigInteger(b);
+		
+		
+		
+		return addPadding(newS.toString(2), 4);
+	}
+	
+	
 	private static BigInteger[] processKey(String key){
-		BigInteger k = permutateKey(new BigInteger(key, 16), sbox.PC1, 64);
+		BigInteger k = permutate(new BigInteger(key, 16), sbox.PC1, 64);
 		String k_str = addPadding(k.toString(2), 56);
 		String c_0 = k_str.substring(0, k_str.length()/2);
 		String d_0 = k_str.substring(k_str.length()/2, k_str.length());
@@ -116,12 +160,12 @@ public class DES_Skeleton {
 			sub_keys[i-1] = mergeKeys(c_arr[i], d_arr[i], 28);
 		}
 		for(int i=0; i< 16; i++){
-			sub_keys[i] = permutateKey(sub_keys[i], sbox.PC2, 56);
+			sub_keys[i] = permutate(sub_keys[i], sbox.PC2, 56);
 		}
 		return sub_keys;
 	}
 
-	private static BigInteger permutateKey(BigInteger k, int[] pc, int length){
+	private static BigInteger permutate(BigInteger k, int[] pc, int length){
 		String bin_k = addPadding(k.toString(2), length);
 		String new_key = "";
 		
