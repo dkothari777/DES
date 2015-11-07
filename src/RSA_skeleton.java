@@ -2,20 +2,27 @@ import gnu.getopt.Getopt;
 
 
 public class RSA_skeleton {
-
+	private static boolean kflag = false;
 	public static void main(String[] args){
 		
-		StringBuilder bitSizeStr = new StringBuilder();
+		StringBuilder bitSizeStr = new StringBuilder(); //this is the -k -b bit-size default should be 1024
 		StringBuilder nStr = new StringBuilder();
 		StringBuilder dStr = new StringBuilder();
 		StringBuilder eStr = new StringBuilder();
 		StringBuilder m = new StringBuilder();
 		
+		
 		pcl(args, bitSizeStr, nStr, dStr, eStr,m);
 		
 		if(!bitSizeStr.toString().equalsIgnoreCase("")){
 			//This means you want to create a new key
-			genRSAkey(bitSizeStr);
+			genRSAkey(bitSizeStr.toString());
+			kflag = false;
+		}
+		
+		if(kflag== true){
+			genRSAkey("1024");
+			kflag = false;
 		}
 		
 		if(!eStr.toString().equalsIgnoreCase("")){
@@ -40,7 +47,7 @@ public class RSA_skeleton {
 		// TODO Auto-generated method stub
 	}
 	
-	private static void genRSAkey(StringBuilder bitSizeStr) {
+	private static void genRSAkey(String bitSizeStr) {
 		// TODO Auto-generated method stub
 	}
 
@@ -76,6 +83,7 @@ public class RSA_skeleton {
 		        	  dStr.append(arg);
 		        	  break;
 		          case 'k':
+		        	  kflag = true;
 		        	  break;
 		     	  case 'b':
 		        	  arg = g.getOptarg();
