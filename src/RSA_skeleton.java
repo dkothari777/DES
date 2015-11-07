@@ -93,7 +93,12 @@ public class RSA_skeleton {
 	
 	private static void callUsage(int exitStatus) {
 
-		String useage = "";
+		String useage = "-h\n\tPrints out all the command line options supported by your program.\n\n"
+				+ "-k -b <bit_size>\n\tgenerates a public/private key pair, encoded in hex, printed on the command line. The size of the key is given by the <bit_size>.\n\n"
+				+ "-e <public key> -i <plaintext_value>\n"
+				+ "\tencrypts the text <plaintext_value> using the <public key> and prints the output.\n\n"
+				+ "-d <private_key> -i <ciphertext_value>\n"
+				+ "\tdecrypts the file <ciphertext_value> using the <private_key> and prints the output.\n";
 		
 		System.err.println(useage);
 		System.exit(exitStatus);
