@@ -1,5 +1,7 @@
-import gnu.getopt.Getopt;
+import java.math.BigInteger;
 
+import gnu.getopt.Getopt;
+import java.security.SecureRandom;
 
 public class RSA_skeleton {
 	private static boolean kflag = false;
@@ -49,6 +51,20 @@ public class RSA_skeleton {
 	
 	private static void genRSAkey(String bitSizeStr) {
 		// TODO Auto-generated method stub
+		SecureRandom rnd = new SecureRandom();
+		BigInteger p = BigInteger.probablePrime(Integer.parseInt(bitSizeStr), rnd);
+		BigInteger q = BigInteger.probablePrime(Integer.parseInt(bitSizeStr), rnd);
+		BigInteger n = p.multiply(q);
+		BigInteger fi_n = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
+		Integer e_int= rnd.nextInt()%10000;
+		BigInteger e = new BigInteger(e_int.toString());
+		while (e_int%2 == 0 || fi_n.mod(e) == BigInteger.ZERO || e.mod(fi_n) == BigInteger.ZERO){
+			e_int= rnd.nextInt()%10000;
+			e = new BigInteger(e_int.toString());
+		}
+		BigInteger d = e.modInverse(fi_n);
+		System.out.println("Public: " + e.toString(16) + n.toString(16));
+		System.out.println("Private: " + d.toString(16)+ n.toString(16));
 	}
 
 
