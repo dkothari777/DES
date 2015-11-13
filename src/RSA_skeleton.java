@@ -45,8 +45,7 @@ public class RSA_skeleton {
 		BigInteger msg = new BigInteger(m, 16);
 		BigInteger n = new BigInteger(nStr, 16);
 		BigInteger e = new BigInteger(eStr, 16);
-		BigInteger output = msg.pow(e.intValue());
-		output = output.mod(n);
+		BigInteger output = msg.modPow(e, n);
 		System.out.println(output.toString(16));
 	}
 
@@ -56,8 +55,7 @@ public class RSA_skeleton {
 		BigInteger c = new BigInteger(cStr, 16);
 		BigInteger n = new BigInteger(nStr, 16);
 		BigInteger d = new BigInteger(dStr, 16);
-		BigInteger output = c.pow(d.intValue());
-		output = output.mod(n);
+		BigInteger output = c.modPow(d, n);
 		System.out.println(output.toString(16));
 	}
 	
