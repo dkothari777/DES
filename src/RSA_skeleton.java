@@ -28,11 +28,11 @@ public class RSA_skeleton {
 		}
 		
 		if(!eStr.toString().equalsIgnoreCase("")){
-			RSAencrypt(m, nStr, eStr);
+			RSAencrypt(m.toString(), nStr.toString(), eStr.toString());
 		}
 		
 		if(!dStr.toString().equalsIgnoreCase("")){
-			RSAdecrypt(m, nStr, dStr);
+			RSAdecrypt(m.toString(), nStr.toString(), dStr.toString());
 		}
 		
 		
@@ -40,13 +40,25 @@ public class RSA_skeleton {
 
 
 
-	private static void RSAencrypt(StringBuilder m, StringBuilder nStr, StringBuilder eStr) {
+	private static void RSAencrypt(String m, String nStr, String eStr) {
 		// TODO Auto-generated method stub
+		BigInteger msg = new BigInteger(m, 16);
+		BigInteger n = new BigInteger(nStr, 16);
+		BigInteger e = new BigInteger(eStr, 16);
+		BigInteger output = msg.pow(e.intValue());
+		output = output.mod(n);
+		System.out.println(output.toString(16));
 	}
 
-	private static void RSAdecrypt(StringBuilder cStr, StringBuilder nStr,
-			StringBuilder dStr){
+	private static void RSAdecrypt(String cStr, String nStr,
+			String dStr){
 		// TODO Auto-generated method stub
+		BigInteger c = new BigInteger(cStr, 16);
+		BigInteger n = new BigInteger(nStr, 16);
+		BigInteger d = new BigInteger(dStr, 16);
+		BigInteger output = c.pow(d.intValue());
+		output = output.mod(n);
+		System.out.println(output.toString(16));
 	}
 	
 	private static void genRSAkey(String bitSizeStr) {
@@ -63,8 +75,9 @@ public class RSA_skeleton {
 			e = new BigInteger(e_int.toString());
 		}
 		BigInteger d = e.modInverse(fi_n);
-		System.out.println("Public: " + e.toString(16) + n.toString(16));
-		System.out.println("Private: " + d.toString(16)+ n.toString(16));
+		System.out.println("Public: " + e.toString(16));
+		System.out.println("Private: " + d.toString(16));
+		System.out.println("n: "+ n.toString(16));
 	}
 
 
