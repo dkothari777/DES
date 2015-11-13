@@ -63,21 +63,26 @@ public class RSA_skeleton {
 	
 	private static void genRSAkey(String bitSizeStr) {
 		// TODO Auto-generated method stub
-		SecureRandom rnd = new SecureRandom();
-		BigInteger p = BigInteger.probablePrime(Integer.parseInt(bitSizeStr), rnd);
-		BigInteger q = BigInteger.probablePrime(Integer.parseInt(bitSizeStr), rnd);
-		BigInteger n = p.multiply(q);
-		BigInteger fi_n = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
-		Integer e_int= rnd.nextInt()%10000;
-		BigInteger e = new BigInteger(e_int.toString());
-		while (e_int%2 == 0 || fi_n.mod(e) == BigInteger.ZERO || e.mod(fi_n) == BigInteger.ZERO){
-			e_int= rnd.nextInt()%10000;
-			e = new BigInteger(e_int.toString());
+		try{
+			SecureRandom rnd = new SecureRandom();
+			BigInteger p = BigInteger.probablePrime(Integer.parseInt(bitSizeStr), rnd);
+			BigInteger q = BigInteger.probablePrime(Integer.parseInt(bitSizeStr), rnd);
+			BigInteger n = p.multiply(q);
+			BigInteger fi_n = p.subtract(BigInteger.ONE);
+			fi_n = fi_n.multiply(q.subtract(BigInteger.ONE));
+			Integer e_int= Math.abs(rnd.nextInt()%10000);
+			BigInteger e = new BigInteger(e_int.toString());
+			while (e_int%2 == 0 || fi_n.mod(e) == BigInteger.ZERO || e.mod(fi_n) == BigInteger.ZERO){
+				e_int= rnd.nextInt()%10000;
+				e = new BigInteger(e_int.toString());
+			}
+			BigInteger d = e.modInverse(fi_n);
+			System.out.println("Public: " + e.toString(16));
+			System.out.println("Private: " + d.toString(16));
+			System.out.println("n: "+ n.toString(16));
+		}catch(Exception e){
+			genRSAkey(bitSizeStr);
 		}
-		BigInteger d = e.modInverse(fi_n);
-		System.out.println("Public: " + e.toString(16));
-		System.out.println("Private: " + d.toString(16));
-		System.out.println("n: "+ n.toString(16));
 	}
 
 
@@ -132,9 +137,9 @@ public class RSA_skeleton {
 
 		String useage = "-h\n\tPrints out all the command line options supported by your program.\n\n"
 				+ "-k -b <bit_size>\n\tgenerates a public/private key pair, encoded in hex, printed on the command line. The size of the key is given by the <bit_size>.\n\n"
-				+ "-e <public key> -i <plaintext_value>\n"
+				+ "-e <public key> -n <modulus> -i <plaintext_value>\n"
 				+ "\tencrypts the text <plaintext_value> using the <public key> and prints the output.\n\n"
-				+ "-d <private_key> -i <ciphertext_value>\n"
+				+ "-d <private_key> -n <modulus> -i <ciphertext_value>\n"
 				+ "\tdecrypts the file <ciphertext_value> using the <private_key> and prints the output.\n";
 		
 		System.err.println(useage);
