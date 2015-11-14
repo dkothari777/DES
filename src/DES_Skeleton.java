@@ -434,7 +434,6 @@ public class DES_Skeleton {
 		SecureRandom r = new SecureRandom();
 		r.nextBytes(b);
 		BigInteger l = new BigInteger(b);
-		boolean strong = false;
 		while(weakKeys.contains(l.toString(16))){
 			r.nextBytes(b);
 			l = new BigInteger(b);
